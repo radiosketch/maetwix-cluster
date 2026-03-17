@@ -63,7 +63,7 @@ spec:
     initdb:
       encoding: "UTF8"
       locale: "en_US.UTF-8"
-      data-checksums: true
+      data-checksums: "true"
     
     pg_hba:
       - hostssl all all 0.0.0.0/0 md5
@@ -75,7 +75,7 @@ spec:
     maximum_lag_on_failover: 33554432  # 32MB
     
     slots:
-      permanent_replication_slots: true
+      permanent_replication_slots: {}
   
   # Resource limits
   resources:
