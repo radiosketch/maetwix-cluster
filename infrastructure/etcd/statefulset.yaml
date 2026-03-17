@@ -5,7 +5,7 @@ metadata:
   namespace: infrastructure
 spec:
   serviceName: etcd
-  replicas: 3  # Must be odd number (3, 5, 7)
+  replicas: 1  # Must be odd number (3, 5, 7)
   selector:
     matchLabels:
       app: etcd
