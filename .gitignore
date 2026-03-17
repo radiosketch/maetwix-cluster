@@ -1,0 +1,43 @@
+# Secrets - never commit actual secrets!
+*.key
+*.pem
+*.crt
+secrets.yaml
+*-secret.yaml
+!sealed-secret.yaml
+
+# Kubeconfig
+kubeconfig
+*.kubeconfig
+
+# Helm
+charts/
+*.tgz
+
+# Terraform (if using)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+backup/

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: matrix
+  labels:
+    name: matrix
+    app.kubernetes.io/part-of: maetwix-cluster
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    name: monitoring
+    app.kubernetes.io/part-of: maetwix-cluster
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infrastructure
+  labels:
+    name: infrastructure
+    app.kubernetes.io/part-of: maetwix-cluster

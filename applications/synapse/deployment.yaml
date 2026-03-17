@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synapse
+  namespace: matrix
+spec:
+  replicas: 3  # One per site
+  
+  selector:
+    matchLabels:
+      app: synapse
+  
+  # Spread replicas across zones
+  template:
+    metadata:
+      labels:
+        app: synapse
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - synapse
+                topologyKey: topology.kubernetes.io/zone
+      
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z synapse-postgres 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+      
+      containers:
+        - name: synapse
+          image: matrixdotorg/synapse:v1.98.0
+          ports:
+            - containerPort: 8008
+              name: http
+              protocol: TCP
+            - containerPort: 9093
+              name: replication
+              protocol: TCP
+          
+          env:
+            - name: SYNAPSE_SERVER_NAME
+              value: "maetwix.org"
+            - name: SYNAPSE_REPORT_STATS
+              value: "no"
+            - name: POSTGRES_HOST
+              value: "synapse-postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: "synapse"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: synapse.synapse-postgres.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: synapse.synapse-postgres.credentials.postgresql.acid.zalan.do
+                  key: password
+          
+          volumeMounts:
+            - name: config
+              mountPath: /data/homeserver.yaml
+              subPath: homeserver.yaml
+            - name: config
+              mountPath: /data/log.config.yaml
+              subPath: log.config.yaml
+            - name: media
+              mountPath: /data/media_store
+            - name: uploads
+              mountPath: /data/uploads
+          
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8008
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+          
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8008
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+          
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+      
+      volumes:
+        - name: config
+          configMap:
+            name: synapse-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: synapse-media
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: synapse-media
+  namespace: matrix
+spec:
+  accessModes:
+    - ReadWriteMany  # Shared across all Synapse pods
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: longhorn  # Or your distributed storage class

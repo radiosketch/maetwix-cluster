@@ -1,0 +1,45 @@
+# Install Zalando Postgres Operator via Helm in ArgoCD
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-operator
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+    targetRevision: 1.10.1
+    chart: postgres-operator
+    helm:
+      values: |
+        configKubernetes:
+          enable_pod_antiaffinity: true
+          pod_antiaffinity_topology_key: "topology.kubernetes.io/zone"
+        
+        configPatroni:
+          enable_patroni_failsafe_mode: false
+        
+        configConnectionPooler:
+          connection_pooler_image: "registry.opensource.zalan.do/acid/pgbouncer:master-27"
+        
+        configPostgresPod:
+          shared_preload_libraries: "pg_stat_statements,auto_explain"
+        
+        configLogicalBackup:
+          logical_backup_schedule: "30 0 * * *"  # Daily at 00:30
+          logical_backup_docker_image: "registry.opensource.zalan.do/acid/logical-backup:v1.10.1"
+          logical_backup_s3_bucket: "maetwix-postgres-backups"  # Configure your S3 bucket
+          logical_backup_s3_region: "auto"  # For Cloudflare R2
+          logical_backup_s3_endpoint: "https://<account-id>.r2.cloudflarestorage.com"
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infrastructure
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
