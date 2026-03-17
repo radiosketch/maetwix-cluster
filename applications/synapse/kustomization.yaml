@@ -9,18 +9,11 @@ resources:
   - configmap.yaml
   - ingress.yaml
 
-commonLabels:
-  app: synapse
-  app.kubernetes.io/name: synapse
-  app.kubernetes.io/component: homeserver
-  app.kubernetes.io/part-of: maetwix-cluster
-
-configMapGenerator:
-  - name: synapse-config
-    files:
-      - homeserver.yaml
-      - log.config.yaml
+labels:
+  - pairs:
+      app: synapse
+      app.kubernetes.io/name: synapse
 
 images:
   - name: matrixdotorg/synapse
-    newTag: v1.98.0  # Update this to change Synapse version
+    newTag: v1.98.0
