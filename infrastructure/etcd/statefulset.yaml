@@ -70,20 +70,16 @@ spec:
               mountPath: /var/lib/etcd
           
           livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -ec
-                - etcdctl endpoint health
+              httpGet:
+                path: /health
+                port: 2379
             initialDelaySeconds: 10
-            periodSeconds: 5
+            periodSeconds: 10
           
           readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -ec
-                - etcdctl endpoint health
+              httpGet:
+                path: /health
+                port: 2379
             initialDelaySeconds: 5
             periodSeconds: 5
           
